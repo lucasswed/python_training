@@ -1,9 +1,19 @@
+from curses.ascii import isalpha
 import json
-import random 
+import random
+from tkinter import font
 import pygame as pg
 import requests
 
-def make_request(letra):
+# CORES
+
+black = (0, 0, 0)
+white = (255, 255, 255)
+red = (255, 0, 0)
+green = (0, 255, 0)
+blue = (0, 0, 255)
+
+def	make_request(letra):
 	url = 'http://papalavras-server.herokuapp.com/words/random/' + letra
 	try:
 		req = requests.get(url)
@@ -13,142 +23,46 @@ def make_request(letra):
 		print("Request mal sucedido. Erro: " + e)
 		return None
 
+def	draw_elements(window):
+	gallows_img = pg.image.load('forca.png')
+	font = pg.font.SysFont('Courier New', 50)
+	font_rb = pg.font.SysFont('Courier New', 35, True)
+	text = font_rb.render('RESTART', True, white)
+	window.fill(white)
+	window.blit(gallows_img, (50, 50))
+	pg.draw.rect(window, black, pg.Rect(480, 60, 180, 70))
+	window.blit(text, (500, 75))
 
-# CORES
+def	start_window(window):
+	pg.init()
+	pg.font.init()
+	draw_elements(window)
+	pg.display.flip()
 
-preto = (0, 0, 0)
-branco = (255, 255, 255)
-vermelho = (255, 0, 0)
-verde = (0, 255, 0)
-azul = (0, 0, 255)
+def	choose_word():
+	alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+	letter = random.choice(alphabet)
+	flag = True
+	dictionary = make_request(letter)
+	word = dictionary["word"]
+	if not word.isalpha():
+		choose_word()
+		
 
-# Abrir uma janela
+def	game(window):
+	choose_word()
 
-window = pg.display.set_mode((720, 480)) # Abre uma janela
-pg.font.init()
-font = pg.font.SysFont('Courier New', 50)
-font_rb = pg.font.SysFont('Courier New', 30)
-
-forca_img = pg.image.load('forca.png') # Carrega a imagem
-window.fill(branco)
-window.blit(forca_img, (50, 50))
-pg.display.flip()
-
-alfabeto = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-
-letra = random.choice(alfabeto)
-choice = True
-while choice:
-	choice = False
-	dicionario = make_request(letra) 
-	palavra = dicionario["word"]
-	if not palavra.isalpha():
- 		choice = True
-
-
-# # lines =  400 / (dicionario["count"] * 2)
-
-lifes = 0
-correct_guesses = [' ', '-']
-flag = len(palavra)
-print('lifes: 6')
-
-def desenhar_restart(window):
-	window.fill(branco)
-	texto = font_rb.render('RESTART', True, preto)
-	forca_img = pg.image.load('forca.png') # Carrega a imagem
-	window.blit(forca_img, (50, 50))
-	window.blit(texto, (300, 350))
+window = pg.display.set_mode((720, 480))
+start_window(window)
+game(window)
 
 while True:
-
-	desenhar_restart(window)
 	for event in pg.event.get():
 		if event.type == pg.QUIT:
 			pg.quit()
 			quit()
-
-	flag = len(palavra)
-	for char in palavra:
-		if char in correct_guesses:
-			flag -= 1
-			print(char)
-		else:
-			print('#')
-	if flag == 0:
-			print('Congrats! You win!')
-			break
-
-	guess = input('Take your guesses: ')
-	if guess not in correct_guesses:
-		if guess in palavra:
-			print('Correct guess')
-			correct_guesses += guess
-		else:
-			print('Wrong guess')
-			lifes += 1
-			if lifes >= 1:
-				pg.draw.circle(window, preto, (156.5, 99), 30, 3) #cabeca
-			if lifes >= 2:
-				pg.draw.line(window, preto, (156.5, 129), (156.5, 189), 5) #corpo
-			if lifes >= 3:
-				pg.draw.line(window, preto, (156.5, 129), (186.5, 179), 5) #braço direito
-			if lifes >= 4:
-				pg.draw.line(window, preto, (156.5, 129), (126.5, 179), 5) #braço esquerdo
-			if lifes >= 5:
-				pg.draw.line(window, preto, (156.5, 189), (186.5, 219), 5) #perna direita
-			if lifes >= 6:
-				pg.draw.line(window, preto, (156.5, 189), (126.5, 219), 5) #perna esquerda
-			print('lifes: ' + str(6 - lifes))
-
-	pg.display.update()
-if lifes == 6:
-	print('You lose!')
-	print(f"The word was {palavra}")
-
-
-
-# Desenhar os elementos iniciais
-# Se alguma letra for descoberta, substituir o traco pela letra correspondente
-# Se ganhar, printar na janela que ganhou
-# Se perder todas as vidas printar que perdeu
-
-# palavras = ['rainbow', 'computer', 'science', 'programming', 
-# 			'python', 'mathematics', 'player', 'condition', 
-# 			'reverse', 'water', 'board', 'geeks']
-
-# palavra = random.palavra(palavras)
-# lifes = 5
-# correct_guesses = ''
-# print('The word has been chosen!')
-# flag = len(palavra)
-# print('lifes: ' + str(lifes))
-
-# while lifes > 0:
-# 	flag = len(palavra)
-
-# 	for char in palavra:
-# 		if char in correct_guesses:
-# 			flag -= 1
-# 			print(char)
-# 		else:
-# 			print('-')
-# 	if flag == 0:
-# 			print('Congrats! You win!')
-# 			break
-
-# 	guess = input('Take your guesses: ')
-
-# 	if guess not in correct_guesses:
-# 		if guess in palavra:
-# 			print('Correct guess')
-# 			correct_guesses += guess
-# 		else:
-# 			print('Wrong guess')
-# 			lifes -= 1
-# 			print('lifes: ' + str(lifes))
-# if lifes == 0:
-# 	print('You lose!')
-
-
-
+		if event.type == pg.MOUSEBUTTONUP:
+			mouse = pg.mouse.get_pos()
+			if pg.Rect.collidepoint(pg.Rect(480, 60, 180, 70), mouse):
+				print('clicou')
+	pg.display.flip()
